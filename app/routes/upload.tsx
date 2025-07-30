@@ -1,13 +1,13 @@
-import { prepareInstructions } from "../../constants";
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router";
-import FileUploader from "~/components/FileUploader";
+import { type FormEvent, useState } from "react";
 import Navbar from "~/components/Navbar";
-import { convertPdfToImage } from "~/lib/pdf2img";
+import FileUploader from "~/components/FileUploader";
 import { usePuterStore } from "~/lib/puter";
-import { generateUUID } from "~/lib/util";
+import { useNavigate } from "react-router";
+import { convertPdfToImage } from "~/lib/pdf2img";
+import { generateUUID } from "~/lib/utils";
+import { prepareInstructions } from "../../constants";
 
-const upload = () => {
+const Upload = () => {
   const { auth, isLoading, fs, ai, kv } = usePuterStore();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -30,10 +30,10 @@ const upload = () => {
     file: File;
   }) => {
     setIsProcessing(true);
-    setStatusText("Analyzing your resume...");
 
+    setStatusText("Uploading the file...");
     const uploadedFile = await fs.upload([file]);
-    if (!uploadedFile) return setStatusText("Error: Failed to upload File");
+    if (!uploadedFile) return setStatusText("Error: Failed to upload file");
 
     setStatusText("Converting to image...");
     const imageFile = await convertPdfToImage(file);
@@ -42,7 +42,7 @@ const upload = () => {
 
     setStatusText("Uploading the image...");
     const uploadedImage = await fs.upload([imageFile.file]);
-    if (!uploadedImage) return setStatusText("Error: Failed to upload Image");
+    if (!uploadedImage) return setStatusText("Error: Failed to upload image");
 
     setStatusText("Preparing data...");
     const uuid = generateUUID();
@@ -51,13 +51,14 @@ const upload = () => {
       resumePath: uploadedFile.path,
       imagePath: uploadedImage.path,
       companyName,
-      jobDescription,
       jobTitle,
+      jobDescription,
       feedback: "",
     };
     await kv.set(`resume:${uuid}`, JSON.stringify(data));
 
     setStatusText("Analyzing...");
+
     const feedback = await ai.feedback(
       uploadedFile.path,
       prepareInstructions({ jobTitle, jobDescription })
@@ -88,27 +89,23 @@ const upload = () => {
 
     if (!file) return;
 
-    handleAnalyze({
-      companyName,
-      jobDescription,
-      jobTitle,
-      file,
-    });
+    handleAnalyze({ companyName, jobTitle, jobDescription, file });
   };
 
   return (
     <main className="bg-[url('/images/bg-main.svg')] bg-cover">
       <Navbar />
+
       <section className="main-section">
         <div className="page-heading py-16">
-          <h1>Smart Feddback for your dream job</h1>
+          <h1>Smart feedback for your dream job</h1>
           {isProcessing ? (
             <>
               <h2>{statusText}</h2>
               <img src="/images/resume-scan.gif" className="w-full" />
             </>
           ) : (
-            <h2>Drop your Resume for an ATS score and improvements tips</h2>
+            <h2>Drop your resume for an ATS score and improvement tips</h2>
           )}
           {!isProcessing && (
             <form
@@ -159,5 +156,4 @@ const upload = () => {
     </main>
   );
 };
-
-export default upload;
+export default Upload;

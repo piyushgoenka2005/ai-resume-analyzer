@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { formatSize } from "~/lib/util";
+import { formatSize } from "~/lib/utils";
 
 interface FileUploaderProps {
   onFileSelect?: (file: File | null) => void;
